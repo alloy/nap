@@ -69,7 +69,11 @@ module REST
 
       def mod.classes
         class_names.map do |name|
-          Object.const_get(name) rescue NameError
+          begin
+            Object.const_get(name)
+          rescue NameError
+            nil
+          end
         end.compact
       end
 
