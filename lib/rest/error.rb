@@ -66,9 +66,11 @@ module REST
     [Timeout, Connection, Protocol].each do |mod|
       mod.send(:include, Error)
 
+      # Collect all the error classes that exist at runtime.
       def mod.classes
         class_names.map do |name|
           begin
+            # MRI < 2 does not support full constant paths for `Object.const_get`.
             name.split('::').inject(Object) do |current, const|
               current.const_get(const)
             end
@@ -78,8 +80,8 @@ module REST
         end.compact
       end
 
+      # Include the `mod` into the classes.
       def mod.extend_classes!
-        # Include the `mod` into the classes.
         classes.each { |klass| klass.send(:include, self) }
       end
 
