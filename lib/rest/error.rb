@@ -22,45 +22,43 @@ module REST
   module Error
     # This constant can be used to rescue only the known `Timeout` error classes.
     module Timeout
-      def self.classes
-        [
-          Errno::ETIMEDOUT,
-          ::Timeout::Error,
-          Net::OpenTimeout,
-          Net::ReadTimeout,
-        ]
+      def self.class_names
+        %w(
+          Errno::ETIMEDOUT
+          Timeout::Error
+          Net::OpenTimeout
+          Net::ReadTimeout
+        )
       end
     end
 
     # This constant can be used to rescue only the known `Connection` error classes.
     module Connection
-      # These need to be extended after requiring the `openssl` lib, because it
-      # only extends the `OpenSSL::SSL::SSLError` class if it's loaded.
-      def self.classes
-        classes = [
-          EOFError,
-          Errno::ECONNABORTED,
-          Errno::ECONNREFUSED,
-          Errno::ECONNRESET,
-          Errno::EHOSTUNREACH,
-          Errno::EINVAL,
-          Errno::ENETUNREACH,
-          SocketError,
-        ]
-        classes << OpenSSL::SSL::SSLError if defined?(OpenSSL)
-        classes
+      def self.class_names
+        %w(
+          EOFError
+          Errno::ECONNABORTED
+          Errno::ECONNREFUSED
+          Errno::ECONNRESET
+          Errno::EHOSTUNREACH
+          Errno::EINVAL
+          Errno::ENETUNREACH
+          SocketError
+          OpenSSL::SSL::SSLError
+        )
       end
     end
 
     # This constant can be used to rescue only the known `Protocol` error classes.
     module Protocol
-      def self.classes
-        [
-          Net::HTTPBadResponse,
-          Net::HTTPHeaderSyntaxError,
-          Net::ProtocolError,
-          Zlib::GzipFile::Error,
-        ]
+      def self.class_names
+        %w(
+          Net::HTTPBadResponse
+          Net::HTTPHeaderSyntaxError
+          Net::ProtocolError
+          Zlib::GzipFile::Error
+          Foobla
+        )
       end
     end
 
@@ -68,10 +66,18 @@ module REST
 
     [Timeout, Connection, Protocol].each do |mod|
       mod.send(:include, Error)
+
+      def mod.classes
+        class_names.map do |name|
+          Object.const_get(name) rescue NameError
+        end.compact
+      end
+
       def mod.extend_classes!
         # Include the `mod` into the classes.
         classes.each { |klass| klass.send(:include, self) }
       end
+
       mod.extend_classes!
     end
   end
