@@ -57,7 +57,6 @@ module REST
           Net::HTTPHeaderSyntaxError
           Net::ProtocolError
           Zlib::GzipFile::Error
-          Foobla
         )
       end
     end
@@ -70,7 +69,9 @@ module REST
       def mod.classes
         class_names.map do |name|
           begin
-            Object.const_get(name)
+            name.split('::').inject(Object) do |current, const|
+              current.const_get(const)
+            end
           rescue NameError
             nil
           end
